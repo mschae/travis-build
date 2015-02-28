@@ -25,6 +25,42 @@ describe Travis::Build::Script::Csharp, :sexp do
     end
   end
 
+  describe 'version switching' do
+    it 'throws a error with a invalid version' do
+      data[:config][:mono] = 'foo'
+      should include_sexp [:echo, '"foo" is not a valid version of mono.', {:ansi=>:red}]
+    end
+
+    it 'throws a error with a invalid version' do
+      data[:config][:mono] = '12.55.523'
+      should include_sexp [:echo, '"12.55.523" is not a valid version of mono.', {:ansi=>:red}]
+    end
+
+    it 'throws a error for invalid version of mono 2' do
+      data[:config][:mono] = '2.1.1'
+      should include_sexp [:echo, '"2.1.1" is not a valid version of mono.', {:ansi=>:red}]
+    end
+
+    it 'throws a error for mono 1' do
+      data[:config][:mono] = '1.1.8'
+      should include_sexp [:echo, '"1.1.8" is not a valid version of mono.', {:ansi=>:red}]
+    end
+
+    it 'selects mono 2' do
+      data[:config][:mono] = '2.10.8'
+      should include_sexp [:cmd,'sudo apt-get install -qq mono-complete mono-vbnc', timing: true]
+    end
+
+    it 'selects latest version by default' do
+      should include_sexp [:cmd, "sudo sh -c \"echo 'deb http://download.mono-project.com/repo/debian wheezy main' >> /etc/apt/sources.list.d/mono-xamarin.list\""]
+    end
+
+    it 'selects correct version' do
+      data[:config][:mono] = '3.12.0'
+      should include_sexp [:cmd, "sudo sh -c \"echo 'deb http://download.mono-project.com/repo/debian wheezy/snapshots/3.12.0 main' >> /etc/apt/sources.list.d/mono-xamarin.list\""]
+    end
+  end
+
   describe 'export' do
     it 'sets TRAVIS_SOLUTION' do
       data[:config][:solution] = 'foo.sln'
